@@ -1,0 +1,45 @@
+databases:
+  - name: parliament-redis
+    plan: free # Or 'starter' for production persistence
+    ipAllowList: [] # Only allow internal connections
+
+services:
+  # 1. The Web Server (Django)
+  - type: web
+    name: parliament-backend
+    env: python
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: CELERY_BROKER_URL
+        fromDatabase:
+          name: parliament-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromDatabase:
+          name: parliament-redis
+          property: connectionString
+      - fromGroup: parliament-settings # Link your .env group here
+
+  # 2. The Background Worker (Celery)
+  - type: worker
+    name: parliament-worker
+    env: python
+    rootDir: backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A config worker --loglevel=info --concurrency=2"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: CELERY_BROKER_URL
+        fromDatabase:
+          name: parliament-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromDatabase:
+          name: parliament-redis
+          property: connectionString
+      - fromGroup: parliament-settings # Link same settings group
