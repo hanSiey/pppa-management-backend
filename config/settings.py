@@ -100,10 +100,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Redis & Celery
-# No localhost defaults. Must be set in .env
-CELERY_BROKER_URL = config('CELERY_BROKER_URL')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND')
 
 # File upload settings
 MEDIA_URL = '/media/'
